@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 # === CONFIG ===
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class_names = ['overripe', 'ripe', 'rotten', 'unripe']
-model_path = 'best_banana_resnet18.pth'  # path to your saved model
+model_path = 'best_banana_resnet18.pth'  # path to saved model
 
 # === Load Model ===
 model = resnet18(weights=ResNet18_Weights.DEFAULT)
@@ -31,28 +31,42 @@ val_transform = transforms.Compose([
 # === Predict Function ===
 def predict_image(image_path):
     image = Image.open(image_path).convert('RGB')
-
-    # Preprocess
-    img_tensor = val_transform(image).unsqueeze(0).to(device)
-
-    # Predict
+    
+    # Show original image
+    plt.figure(figsize=(10, 4))
+    plt.subplot(1, 2, 1)
+    plt.imshow(image)
+    plt.title('Original Image')
+    plt.axis('off')
+    
+    # Preprocess and predict
+    image_tensor = val_transform(image).unsqueeze(0).to(device)
+    
+    model.eval()
     with torch.no_grad():
-        outputs = model(img_tensor)
+        outputs = model(image_tensor)
         probabilities = torch.nn.functional.softmax(outputs, dim=1)
         confidence, predicted = torch.max(probabilities, 1)
-
+        
     predicted_class = class_names[predicted.item()]
     confidence_score = confidence.item()
-
-    # Display results
-    plt.imshow(image)
-    plt.title(f"Predicted: {predicted_class} ({confidence_score*100:.2f}%)")
-    plt.axis('off')
+    
+    # Plot prediction probabilities
+    plt.subplot(1, 2, 2)
+    probs = probabilities.cpu().numpy()[0]
+    plt.bar(class_names, probs)
+    plt.title(f'Prediction: {predicted_class}\nConfidence: {confidence_score:.2f}')
+    plt.xticks(rotation=45)
+    plt.ylabel('Probability')
+    
+    plt.tight_layout()
     plt.show()
+    
+    return predicted_class, confidence_score
 
-    print(f"Prediction: {predicted_class} | Confidence: {confidence_score*100:.2f}%")
+
 
 # === Run Example ===
 if __name__ == "__main__":
-    image_path = r"rotten.jpg"  # change this to your image path
+    image_path = r"overripe.jpg"  # change this to image path
     predict_image(image_path)

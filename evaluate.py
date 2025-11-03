@@ -57,3 +57,39 @@ plt.show()
 
 print("\nClassification Report:")
 print(classification_report(all_labels, all_preds, target_names=class_names))
+# Single image prediction example
+def predict_image(image_path):
+    image = Image.open(image_path).convert('RGB')
+    
+    # Show original image
+    plt.figure(figsize=(10, 4))
+    plt.subplot(1, 2, 1)
+    plt.imshow(image)
+    plt.title('Original Image')
+    plt.axis('off')
+    
+    # Preprocess and predict
+    image_tensor = val_transform(image).unsqueeze(0).to(device)
+    
+    model.eval()
+    with torch.no_grad():
+        outputs = model(image_tensor)
+        probabilities = torch.nn.functional.softmax(outputs, dim=1)
+        confidence, predicted = torch.max(probabilities, 1)
+        
+    predicted_class = class_names[predicted.item()]
+    confidence_score = confidence.item()
+    
+    # Plot prediction probabilities
+    plt.subplot(1, 2, 2)
+    probs = probabilities.cpu().numpy()[0]
+    plt.bar(class_names, probs)
+    plt.title(f'Prediction: {predicted_class}\nConfidence: {confidence_score:.2f}')
+    plt.xticks(rotation=45)
+    plt.ylabel('Probability')
+    
+    plt.tight_layout()
+    plt.show()
+    
+    return predicted_class, confidence_score
+
