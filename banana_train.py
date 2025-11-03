@@ -12,17 +12,6 @@ import seaborn as sns
 from collections import Counter
 from torchvision.models import resnet18, ResNet18_Weights
 
-# Use pretrained weights safely (new syntax)
-model = resnet18(weights=ResNet18_Weights.DEFAULT)
-
-num_features = model.fc.in_features
-model.fc = nn.Sequential(
-    nn.Dropout(0.5),
-    nn.Linear(num_features, 4)
-)
-
-print("Using ResNet18 with pretrained weights")
-
 
 
 #Import files
