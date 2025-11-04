@@ -68,5 +68,5 @@ def predict_image(image_path):
 
 # === Run Example ===
 if __name__ == "__main__":
-    image_path = r"ripe_banana.jpg"  # change this to image path
+    image_path = r"Group_41_Banana_images\rotten.jpg"  # change this to image path
     predict_image(image_path)
