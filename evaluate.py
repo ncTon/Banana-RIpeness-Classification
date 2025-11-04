@@ -27,23 +27,39 @@ val_transform = transforms.Compose([
     transforms.ToTensor(),
 ])
 
-test_data = ImageFolder('Banana Ripeness Classification Dataset/test', transform=val_transform)
-test_loader = DataLoader(test_data, batch_size=32, shuffle=False)
+# Datasets
+train_data = ImageFolder('Banana Ripeness Classification Dataset/train', transform=val_transform)
+valid_data = ImageFolder('Banana Ripeness Classification Dataset/valid', transform=val_transform)
+test_data  = ImageFolder('Banana Ripeness Classification Dataset/test', transform=val_transform)
 
-# === 3. Evaluate ===
-all_preds, all_labels = [], []
-with torch.no_grad():
-    for data, target in test_loader:
-        data, target = data.to(device), target.to(device)
-        outputs = model(data)
-        _, predicted = outputs.max(1)
-        all_preds.extend(predicted.cpu().numpy())
-        all_labels.extend(target.cpu().numpy())
+# Loaders
+train_loader = DataLoader(train_data, batch_size=32, shuffle=False)
+valid_loader = DataLoader(valid_data, batch_size=32, shuffle=False)
+test_loader  = DataLoader(test_data,  batch_size=32, shuffle=False)
 
-# === 4. Metrics ===
-test_accuracy = 100. * sum(p == l for p, l in zip(all_preds, all_labels)) / len(all_labels)
-print(f'\nTest Accuracy: {test_accuracy:.2f}%')
+# === 3. Helper function ===
+def evaluate(loader):
+    all_preds, all_labels = [], []
+    with torch.no_grad():
+        for data, target in loader:
+            data, target = data.to(device), target.to(device)
+            outputs = model(data)
+            _, predicted = outputs.max(1)
+            all_preds.extend(predicted.cpu().numpy())
+            all_labels.extend(target.cpu().numpy())
+    acc = 100. * sum(p == l for p, l in zip(all_preds, all_labels)) / len(all_labels)
+    return acc, all_preds, all_labels
 
+# === 4. Evaluate all ===
+train_acc, _, _ = evaluate(train_loader)
+valid_acc, _, _ = evaluate(valid_loader)
+test_acc, all_preds, all_labels = evaluate(test_loader)
+
+print(f"Train Accuracy: {train_acc:.2f}%")
+print(f"Validation Accuracy: {valid_acc:.2f}%")
+print(f"Test Accuracy: {test_acc:.2f}%")
+
+# === 5. Confusion Matrix & Report ===
 class_names = ['rotten', 'ripe', 'overripe', 'unripe']
 
 cm = confusion_matrix(all_labels, all_preds)
@@ -57,4 +73,3 @@ plt.show()
 
 print("\nClassification Report:")
 print(classification_report(all_labels, all_preds, target_names=class_names))
-
